@@ -27,7 +27,10 @@ def main():
     with psycopg.connect(DB_URL) as conn:
         with conn.cursor() as cur:
             for (content, category, days_ago), vector in zip(SAMPLES, vectors):
-                cur.execute("INSERT INTO documents (created_at, content, metadata, embedding) VALUES (%s, %s, %s, %s::vector)", (now - timedelta(days=days_ago), content, Jsonb({"category": category, "source": "sample"}), vector))
+                cur.execute(
+                    "INSERT INTO documents (created_at, content, metadata, embedding) VALUES (%s, %s, %s, %s::vector)",
+                    (now - timedelta(days=days_ago), content, Jsonb({"category": category, "source": "sample"}), vector),
+                )
         conn.commit()
     print(f"Inserted {len(SAMPLES)} sample documents.")
 
