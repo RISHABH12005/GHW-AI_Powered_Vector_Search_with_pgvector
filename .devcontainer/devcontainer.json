@@ -5,8 +5,8 @@
   "portsAttributes": {
     "8501": {
       "label": "Streamlit vector search",
-      "onAutoForward": "notify"
+      "onAutoForward": "openBrowser"
     }
   },
-  "postCreateCommand": "python -m pip install --upgrade pip"
+  "postCreateCommand": "python -m pip install --upgrade pip && pip install -r requirements.txt"
 }
