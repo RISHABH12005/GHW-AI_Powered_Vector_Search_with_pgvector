@@ -40,8 +40,13 @@ if st.button("Search documents", type="primary"):
             ORDER BY embedding <=> %s::vector
             LIMIT %s
         """
-        with psycopg.connect(DB_URL) as conn:
-            rows = conn.execute(sql, (embedding, start, end, category, category, embedding, top_k)).fetchall()
+        try:
+            with psycopg.connect(DB_URL) as conn:
+                rows = conn.execute(sql, (embedding, start, end, category, category, embedding, top_k)).fetchall()
+        except Exception as exc:
+            st.error(f"Search failed: {exc}")
+            st.caption("Verify DATABASE_URL, run init_db.py, and load sample documents with seed.py.")
+            st.stop()
     if not rows:
         st.info("No matches found. Try a longer time range or another category.")
     else:
