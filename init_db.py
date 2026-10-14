@@ -1,7 +1,6 @@
 import os
 import psycopg
 from pgvector.psycopg import register_vector
-from pgvector.psycopg import register_vector
 
 DB_URL = os.getenv('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/vector_demo')
 
