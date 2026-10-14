@@ -62,7 +62,7 @@ if st.button('Search documents', type='primary'):
         df['Cosine similarity'] = df['Cosine similarity'].astype(float).round(4)
         st.dataframe(df, use_container_width=True, hide_index=True)
         for row in rows:
-            with st.expander(f'{row[3]} · similarity {float(row[4]):.3f} · {row[1].strftime('%Y-%m-%d')}'):
+            with st.expander(f"{row[3]} · similarity {float(row[4]):.3f} · {row[1].strftime('%Y-%m-%d')}"):
                 st.write(row[2])
 else:
     st.info('Click Search documents to query the database.')
