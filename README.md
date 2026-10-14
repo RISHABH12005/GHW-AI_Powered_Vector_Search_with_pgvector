@@ -5,7 +5,7 @@ A demo project for the MLH Global Hack Week Open Source TigerData challenge. It 
 ## Features
 
 - Semantic embeddings generated with `sentence-transformers/all-MiniLM-L6-v2` (384 dimensions).
-- PostgreSQL `pgvector` cosine-distance search.
+- PostgreSQL `pgvector` cosine-distance search, using the official Python adapter.
 - Time filtering using `created_at`.
 - JSONB metadata filters (category).
 - Optional TimescaleDB hypertable support.
@@ -16,11 +16,12 @@ A demo project for the MLH Global Hack Week Open Source TigerData challenge. It 
 
 1. Open this repository and select **Code → Codespaces → Create codespace on main**.
 2. In the Codespaces terminal, install dependencies: `pip install -r requirements.txt`.
-3. Set `DATABASE_URL` to a PostgreSQL database that has `pgvector` enabled. The default points at the local Docker Compose service.
-4. If Docker is available in the Codespace, run `docker compose up -d`, then `python init_db.py`, `python seed.py`, and `streamlit run app.py`.
-5. Open forwarded port `8501` from the **Ports** tab.
+3. For Neon, open the project SQL Editor and run `CREATE EXTENSION IF NOT EXISTS vector;`. In **Connect**, copy the pooled or direct connection string with SSL enabled.
+4. In the Codespaces terminal, set the URL for the current terminal session: `read -s -p "Paste DATABASE_URL: " DATABASE_URL; echo; export DATABASE_URL`. Do not commit this value or paste it into public issues.
+5. Run `pip install -r requirements.txt`, `python init_db.py`, `python seed.py`, then `streamlit run app.py`.
+6. Open forwarded port `8501` from the **Ports** tab. Keep the same terminal open so `DATABASE_URL` remains set.
 
-> Codespaces environments do not always support running Docker-in-Docker. If Docker Compose is unavailable, use hosted PostgreSQL with `pgvector`; set `DATABASE_URL` in your Codespaces secrets. TimescaleDB is optional for basic time filtering, but required to demonstrate a hypertable specifically.
+> Codespaces environments do not always support running Docker-in-Docker. If Docker Compose is unavailable (as in many Codespaces), use hosted PostgreSQL with `pgvector`. Neon supports pgvector; use its connection string with SSL enabled. For a persistent setup, add `DATABASE_URL` as a Codespaces repository or environment secret and load it into the terminal before running commands. TimescaleDB is optional for basic time filtering, but required to demonstrate a hypertable specifically.
 
 ## Run locally
 
@@ -69,7 +70,7 @@ A lower cosine distance means a closer vector match; similarity is calculated as
 - **Connection refused:** Check `DATABASE_URL`, database status, and port/SSL requirements.
 - **Model download issue:** The first run downloads the Sentence Transformers model and needs internet access.
 - **TimescaleDB not installed:** Basic filtering still works on PostgreSQL with pgvector; hypertable conversion requires TimescaleDB.
-- **No search results:** Run `python seed.py` after initialization and widen the look-back filter.
+- **No search results:** Run `python seed.py` after initialization and widen the look-back filter. The seed script replaces its own sample rows, so rerunning it will not duplicate the sample dataset.
 
 ## Submission checklist
 
