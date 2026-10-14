@@ -15,8 +15,7 @@ A demo project for the MLH Global Hack Week Open Source TigerData challenge. It 
 ## Run in GitHub Codespaces
 
 1. Open this repository and select **Code → Codespaces → Create codespace on main**.
-2. In the Codespaces terminal, install dependencies: `pip install -r requirements.txt`.
-3. For Neon, open the project SQL Editor and run `CREATE EXTENSION IF NOT EXISTS vector;`. In **Connect**, copy the pooled or direct connection string with SSL enabled.
+2. For Neon, open the project SQL Editor and run `CREATE EXTENSION IF NOT EXISTS vector;`. In **Connect**, copy the pooled or direct connection string with SSL enabled.
 4. In the Codespaces terminal, set the URL for the current terminal session: `read -s -p "Paste DATABASE_URL: " DATABASE_URL; echo; export DATABASE_URL`. Do not commit this value or paste it into public issues.
 5. Run `pip install -r requirements.txt`, `python init_db.py`, `python seed.py`, then `streamlit run app.py`.
 6. Open forwarded port `8501` from the **Ports** tab. Keep the same terminal open so `DATABASE_URL` remains set.
