@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timedelta, timezone
 import psycopg
+from pgvector.psycopg import register_vector
 from psycopg.types.json import Jsonb
 from sentence_transformers import SentenceTransformer
 
@@ -24,11 +25,13 @@ def main():
     model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
     vectors = model.encode([item[0] for item in SAMPLES], normalize_embeddings=True).tolist()
     now = datetime.now(timezone.utc)
-    with psycopg.connect(DB_URL) as conn:
+    with psycopg.connect(DB_URL, connect_timeout=8) as conn:
+        register_vector(conn)
         with conn.cursor() as cur:
+            cur.execute("DELETE FROM documents WHERE metadata->>'source' = 'sample'")
             for (content, category, days_ago), vector in zip(SAMPLES, vectors):
                 cur.execute(
-                    "INSERT INTO documents (created_at, content, metadata, embedding) VALUES (%s, %s, %s, %s::vector)",
+                    "INSERT INTO documents (created_at, content, metadata, embedding) VALUES (%s, %s, %s, %s)",
                     (now - timedelta(days=days_ago), content, Jsonb({"category": category, "source": "sample"}), vector),
                 )
         conn.commit()
