@@ -59,3 +59,5 @@ jobs:
         run: python .github/scripts/smoke_test.py
       - name: Validate Streamlit app syntax
         run: python -m compileall -q app.py init_db.py seed.py
+
+# smoke re-run marker
