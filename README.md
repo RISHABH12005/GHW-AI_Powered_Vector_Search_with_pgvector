@@ -22,6 +22,17 @@ A demo project for the MLH Global Hack Week Open Source TigerData challenge. It 
 
 > Codespaces environments do not always support running Docker-in-Docker. If Docker Compose is unavailable (as in many Codespaces), use hosted PostgreSQL with `pgvector`. Neon supports pgvector; use its connection string with SSL enabled. For a persistent setup, add `DATABASE_URL` as a Codespaces repository or environment secret and load it into the terminal before running commands. TimescaleDB is optional for basic time filtering, but required to demonstrate a hypertable specifically.
 
+
+## Run without Codespaces (GitHub Actions)
+
+If your Codespaces free usage is exhausted, you can validate the project through the **Vector search smoke test** workflow. It starts a temporary PostgreSQL service with pgvector, installs dependencies, initializes the schema, generates sample embeddings, and runs a semantic search query. The database is temporary and is deleted when the workflow finishes.
+
+1. Open **Actions → Vector search smoke test**.
+2. Click **Run workflow** and choose `main`.
+3. Open the run and inspect **Verify documents and vector search** for the seeded document count and top matches.
+
+This workflow tests the application’s database/embedding/search path. It does not publish a permanent dashboard or use a remote Neon database. The Streamlit UI can be launched locally with `streamlit run app.py`, or deployed separately to a hosting provider with a secure `DATABASE_URL` secret.
+
 ## Run locally
 
 Requirements: Python 3.10+, Docker Desktop, Docker Compose.
