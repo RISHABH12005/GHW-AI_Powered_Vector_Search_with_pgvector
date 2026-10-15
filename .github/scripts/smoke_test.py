@@ -13,9 +13,9 @@ with psycopg.connect(url) as conn:
     rows = conn.execute(
         """
         SELECT content, metadata->>'category' AS category,
-               1 - (embedding <=> %s) AS similarity
+               1 - (embedding <=> %s::vector) AS similarity
         FROM documents
-        ORDER BY embedding <=> %s
+        ORDER BY embedding <=> %s::vector
         LIMIT 5
         """,
         (vector, vector)
