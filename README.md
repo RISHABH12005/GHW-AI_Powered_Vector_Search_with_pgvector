@@ -1,60 +1,127 @@
 # AI-Powered Vector Search with pgvector
 
-A demo project for the MLH Global Hack Week Open Source TigerData challenge. It stores text documents, semantic embeddings, timestamps, and JSON metadata in PostgreSQL, then ranks results by vector similarity while filtering by time and metadata.
+A hands-on demo for the **MLH Global Hack Week Open Source TigerData challenge**. The project stores documents and their semantic embeddings in PostgreSQL, then retrieves relevant results using vector similarity, time ranges, and JSONB metadata filters.
 
 ## Features
 
-- Semantic embeddings generated with `sentence-transformers/all-MiniLM-L6-v2` (384 dimensions).
-- PostgreSQL `pgvector` cosine-distance search, using the official Python adapter.
-- Time filtering using `created_at`.
-- JSONB metadata filters (category).
-- Optional TimescaleDB hypertable support.
-- Streamlit UI and SQL example.
-- GitHub Codespaces configuration.
+- **Semantic search:** Generate 384-dimensional embeddings with `sentence-transformers/all-MiniLM-L6-v2`.
+- **Vector similarity:** Rank documents using PostgreSQL's `pgvector` cosine distance.
+- **Time filtering:** Narrow results by `created_at`.
+- **Metadata filtering:** Filter by document category stored in JSONB.
+- **Streamlit interface:** Search documents through a simple UI.
+- **Optional TimescaleDB support:** Demonstrate hypertables where TimescaleDB is available.
+- **Codespaces and CI support:** Run in GitHub Codespaces or use the smoke-test workflow.
+
+## How it works
+
+1. Initialize the PostgreSQL schema and required vector extension.
+2. Seed sample documents and generate embeddings.
+3. Convert the query text into an embedding.
+4. Retrieve the closest vectors, applying optional time and category filters.
+5. Display the matching documents in the Streamlit app.
 
 ## Run in GitHub Codespaces
 
-1. Open this repository and select **Code → Codespaces → Create codespace on main**.
-2. For Neon, open the project SQL Editor and run `CREATE EXTENSION IF NOT EXISTS vector;`. In **Connect**, copy the pooled or direct connection string with SSL enabled.
-4. In the Codespaces terminal, set the URL for the current terminal session: `read -s -p "Paste DATABASE_URL: " DATABASE_URL; echo; export DATABASE_URL`. Do not commit this value or paste it into public issues.
-5. Run `pip install -r requirements.txt`, `python init_db.py`, `python seed.py`, then `streamlit run app.py`.
-6. Open forwarded port `8501` from the **Ports** tab. Keep the same terminal open so `DATABASE_URL` remains set.
+1. Open this repository on GitHub and select **Code → Codespaces → Create codespace on main**.
+2. Use a PostgreSQL database that supports `pgvector`. For Neon, open the SQL Editor and run:
 
-> Codespaces environments do not always support running Docker-in-Docker. If Docker Compose is unavailable (as in many Codespaces), use hosted PostgreSQL with `pgvector`. Neon supports pgvector; use its connection string with SSL enabled. For a persistent setup, add `DATABASE_URL` as a Codespaces repository or environment secret and load it into the terminal before running commands. TimescaleDB is optional for basic time filtering, but required to demonstrate a hypertable specifically.
+   ```sql
+   CREATE EXTENSION IF NOT EXISTS vector;
+   ```
 
+3. Copy your database connection string from the provider. Use SSL where required.
+4. In the Codespaces terminal, set `DATABASE_URL` for the current session:
 
-## Run without Codespaces (GitHub Actions)
+   ```bash
+   read -s -p "Paste DATABASE_URL: " DATABASE_URL; echo
+   export DATABASE_URL
+   ```
 
-If your Codespaces free usage is exhausted, you can validate the project through the **Vector search smoke test** workflow. It starts a temporary PostgreSQL service with pgvector, installs dependencies, initializes the schema, generates sample embeddings, and runs a semantic search query. The database is temporary and is deleted when the workflow finishes.
+5. Install dependencies, initialize the schema, and seed sample data:
+
+   ```bash
+   pip install -r requirements.txt
+   python init_db.py
+   python seed.py
+   ```
+
+6. Start the app:
+
+   ```bash
+   streamlit run app.py
+   ```
+
+7. Open forwarded port `8501` from the Codespaces **Ports** tab.
+
+Keep the terminal session open while using the app so the environment variable remains available. Do not commit your connection string or paste it into public issues. For repeat use, store it as a Codespaces secret and load it securely into the terminal.
+
+> **Note:** Some Codespaces environments cannot run Docker-in-Docker. Using a hosted PostgreSQL service with `pgvector` avoids that dependency. TimescaleDB is optional for ordinary time filtering; it is only required for the hypertable demonstration.
+
+## Validate with GitHub Actions
+
+When Codespaces usage is unavailable, you can run the **Vector search smoke test** workflow:
 
 1. Open **Actions → Vector search smoke test**.
-2. Click **Run workflow** and choose `main`.
-3. Open the run and inspect **Verify documents and vector search** for the seeded document count and top matches.
+2. Select **Run workflow** and choose the `main` branch.
+3. Open the workflow run and inspect **Verify documents and vector search**.
 
-This workflow tests the application’s database/embedding/search path. It does not publish a permanent dashboard or use a remote Neon database. The Streamlit UI can be launched locally with `streamlit run app.py`, or deployed separately to a hosting provider with a secure `DATABASE_URL` secret.
+The workflow starts a temporary PostgreSQL service with `pgvector`, initializes the schema, creates sample embeddings, and runs a semantic search query. Its database is temporary and is removed when the run finishes. This workflow does not publish a permanent dashboard or connect to a remote Neon database.
 
 ## Run locally
 
-Requirements: Python 3.10+, Docker Desktop, Docker Compose.
+### Requirements
+
+- Python 3.10 or later
+- Docker Desktop with Docker Compose
+- A working internet connection for the first model download
+
+### Start the database and application
 
 ```bash
 docker compose up -d
 python -m venv .venv
-# Windows PowerShell: .venv\\Scripts\\Activate.ps1
-# macOS/Linux: source .venv/bin/activate
+```
+
+Activate the virtual environment:
+
+```powershell
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+```
+
+```bash
+# macOS / Linux
+source .venv/bin/activate
+```
+
+Then install dependencies and launch the app:
+
+```bash
 pip install -r requirements.txt
 python init_db.py
 python seed.py
 streamlit run app.py
 ```
 
-The local-only default database URL is `postgresql://postgres:postgres@localhost:5432/vector_demo`. Do not use these credentials for a production/public database.
+The local Compose setup uses this development connection string by default:
+
+```text
+postgresql://postgres:postgres@localhost:5432/vector_demo
+```
+
+Use these credentials only for the local demo. For a hosted or public deployment, configure a secure database URL through environment variables or your hosting provider's secret manager.
 
 ## SQL query pattern
 
+The core search pattern combines cosine distance with time and category filters:
+
 ```sql
-SELECT id, created_at, content, metadata->>'category' AS category,
-       1 - (embedding <=> :query_embedding::vector) AS cosine_similarity
+SELECT
+    id,
+    created_at,
+    content,
+    metadata->>'category' AS category,
+    1 - (embedding <=> :query_embedding::vector) AS cosine_similarity
 FROM documents
 WHERE created_at >= :start_time
   AND created_at < :end_time
@@ -63,36 +130,38 @@ ORDER BY embedding <=> :query_embedding::vector
 LIMIT :top_k;
 ```
 
-A lower cosine distance means a closer vector match; similarity is calculated as `1 - cosine_distance`.
+The `<=>` operator returns cosine distance. Lower distance means a closer vector match; the example converts distance to a similarity-style score using `1 - cosine_distance`.
 
-## Repository files
+## Project structure
 
-- `app.py` — Streamlit search UI.
-- `init_db.py` — extension, table, hypertable, and index setup.
-- `seed.py` — sample documents and embeddings.
-- `docker-compose.yml` — disposable local database.
-- `requirements.txt` — Python dependencies.
-- `.devcontainer/devcontainer.json` — Codespaces defaults.
+| File | Purpose |
+| --- | --- |
+| `app.py` | Streamlit search interface |
+| `init_db.py` | Creates the extension, tables, hypertable where supported, and indexes |
+| `seed.py` | Inserts sample documents and their embeddings |
+| `docker-compose.yml` | Defines the local database service |
+| `requirements.txt` | Python dependencies |
+| `.devcontainer/devcontainer.json` | GitHub Codespaces configuration |
 
 ## Troubleshooting
 
-- **Extension missing:** Confirm the database supports `pgvector`; execute `CREATE EXTENSION vector;`.
-- **Connection refused:** Check `DATABASE_URL`, database status, and port/SSL requirements.
-- **Model download issue:** The first run downloads the Sentence Transformers model and needs internet access.
-- **TimescaleDB not installed:** Basic filtering still works on PostgreSQL with pgvector; hypertable conversion requires TimescaleDB.
-- **No search results:** Run `python seed.py` after initialization and widen the look-back filter. The seed script replaces its own sample rows, so rerunning it will not duplicate the sample dataset.
+- **`vector` extension is missing:** Confirm the database supports `pgvector`, then run `CREATE EXTENSION IF NOT EXISTS vector;`.
+- **Database connection fails:** Check `DATABASE_URL`, database status, SSL requirements, and network access.
+- **The embedding model fails to download:** Ensure the environment has internet access; the model is downloaded on first use.
+- **TimescaleDB is unavailable:** Standard PostgreSQL with `pgvector` still supports the basic time-filtered search. Only the hypertable feature requires TimescaleDB.
+- **No results appear:** Run `python seed.py` after initializing the schema, then widen the selected time range. The seed script replaces its own sample rows rather than duplicating them.
 
 ## Submission checklist
 
-- [ ] Run against a real PostgreSQL/pgvector database.
-- [ ] Confirm seeded rows and run semantic search.
-- [ ] Demonstrate time and category filtering in the UI.
-- [ ] Capture a screenshot of the running app and/or database query output.
-- [ ] Submit this repository URL or screenshot on the MLH challenge page.
+- [ ] Connect to a working PostgreSQL database with `pgvector`.
+- [ ] Initialize the schema and confirm the sample rows are present.
+- [ ] Test semantic search and time/category filters.
+- [ ] Capture a screenshot of the running app or query results.
+- [ ] Submit the repository or screenshot on the MLH challenge page.
 
 ## References
 
 - [Tiger Data: Refining vector search queries with time filters](https://www.tigerdata.com/blog/refining-vector-search-queries-with-time-filters-in-pgvector-a-tutorial)
 - [Tiger Data documentation](https://www.tigerdata.com/docs)
-- [pgvector](https://github.com/pgvector/pgvector)
-- [MLH challenge](https://www.mlh.com/events/global-hack-week-open-source-90/challenges/ghwHF1026-tigerdata-pgvector)
+- [pgvector on GitHub](https://github.com/pgvector/pgvector)
+- [MLH Global Hack Week challenge](https://www.mlh.com/events/global-hack-week-open-source-90/challenges/ghwHF1026-tigerdata-pgvector)
